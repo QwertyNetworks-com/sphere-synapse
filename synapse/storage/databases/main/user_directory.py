@@ -971,10 +971,11 @@ def _parse_words_icu(search_term: str) -> List[str]:
 
         result = search_term[i:j]
 
-        # libicu considers spaces between words as words, but we don't want to include
-        # those in results as they would result in syntax errors in SQL queries (e.g.
-        # "foo bar" would result in the search query including "foo &  & bar").
-        if result != " ":
+        # libicu considers spaces and punctuation between words as words, but we don't
+        # want to include those in results as they would result in syntax errors in SQL
+        # queries (e.g. "foo bar" would result in the search query including "foo &  &
+        # bar").
+        if len(re.findall(r"([\w\-]+)", result, re.UNICODE)):
             results.append(result)
 
         i = j
