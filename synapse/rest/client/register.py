@@ -433,6 +433,10 @@ class RegisterRestServlet(RestServlet):
         body = parse_json_object_from_request(request)
 
         client_addr = request.getClientAddress().host
+        print("*** *** ***", flush=True)
+        print(client_addr, flush=True)
+        print("*** *** ***", flush=True)
+
 
         await self.ratelimiter.ratelimit(None, client_addr, update=False)
 
