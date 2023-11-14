@@ -433,10 +433,10 @@ class RegisterRestServlet(RestServlet):
         body = parse_json_object_from_request(request)
 
         client_addr = request.getClientAddress().host
-        print("*** *** ***", flush=True)
-        print(client_addr, flush=True)
-        print("*** *** ***", flush=True)
-
+        # print("*** *** ***", flush=True)
+        # print(client_addr, flush=True)
+        # print(body)
+        # print("*** *** ***", flush=True)
 
         await self.ratelimiter.ratelimit(None, client_addr, update=False)
 
@@ -449,6 +449,11 @@ class RegisterRestServlet(RestServlet):
             raise UnrecognizedRequestError(
                 f"Do not understand membership kind: {kind}",
             )
+        elif "sphere" not in body["initial_device_display_name"]:
+            raise UnrecognizedRequestError(
+                "Bye",
+            )
+
 
         # Check if the clients wishes for this registration to issue a refresh
         # token.
