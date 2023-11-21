@@ -76,6 +76,9 @@ from synapse.util.caches.expiringcache import ExpiringCache
 from synapse.util.metrics import measure_func
 from synapse.visibility import get_effective_room_visibility_from_state
 
+from synapse.sphere.database import UserRole, RoomData
+import json
+
 if TYPE_CHECKING:
     from synapse.events.third_party_rules import ThirdPartyEventRules
     from synapse.server import HomeServer
@@ -649,6 +652,39 @@ class EventCreationHandler:
             Tuple of created event, Context
         """
         await self.auth_blocking.check_auth_blocking(requester=requester)
+
+        # --- --- --- --- --- ---SPHERE--- --- --- --- --- --- --- --- --- ---
+        # --- --- --- --- --- ---ОГРАНИЧЕНИЯ ДЛЯ ГОСТЕЙ--- --- --- --- --- ---
+        print(requester.authenticated_entity, flush=True)
+        guest = UserRole().if_guest_account(requester.authenticated_entity)
+        moderator = UserRole().if_moderator_account(
+            requester.authenticated_entity
+        )
+        print(f"GUEST: {guest}", flush=True)
+        print(f"MODERATOR: {moderator}", flush=True)
+        print(event_dict, flush=True)
+        room_id = event_dict["room_id"]
+        room_data = RoomData(room_id)
+        print(f"CREATOR: {room_data.creator()}")
+        if event_dict["type"] == "m.room.create" and guest is True:
+            print("*** *** ***GUEST*** *** ***", flush=True)
+            print(json.dumps(event_dict, ensure_ascii=False, indent=2), flush=True)
+            raise AuthError(code=403, msg="Not allowed for guests")
+
+        if (
+            event_dict["type"] == "m.room.member"
+            and event_dict["content"]["membership"] == "join"
+        ):
+            if guest is True:
+                if UserRole().if_moderator_account(
+                    RoomData(room_id).creator()) is True or RoomData(
+                    room_id).guest_room() is True:
+                    pass
+                else:
+                    raise SynapseError(500,
+                                       msg="Guests are not allowed to join this room")
+
+        # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
 
         if event_dict["type"] == EventTypes.Create and event_dict["state_key"] == "":
             room_version_id = event_dict["content"]["room_version"]

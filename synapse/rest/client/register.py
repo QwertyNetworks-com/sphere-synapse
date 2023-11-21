@@ -955,3 +955,4 @@ def register_servlets(hs: "HomeServer", http_server: HttpServer) -> None:
     RegistrationSubmitTokenServlet(hs).register(http_server)
     RegistrationTokenValidityRestServlet(hs).register(http_server)
     RegisterRestServlet(hs).register(http_server)
+

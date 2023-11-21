@@ -51,6 +51,10 @@ from synapse.types import RoomAlias, UserID, create_requester
 if TYPE_CHECKING:
     from synapse.server import HomeServer
 
+import time
+import asyncio
+from synapse.sphere.sphere_api import SphereAPIRequest
+
 logger = logging.getLogger(__name__)
 
 
@@ -1041,3 +1045,22 @@ class RegistrationHandler:
             threepid["address"],
             threepid["validated_at"],
         )
+
+
+# --- --- --- --- --- --- SPHERE --- --- --- --- --- --- --- --- --- --- --
+    def fire_and_forget(f):
+        def wrapped(*args, **kwargs):
+            return asyncio.get_event_loop().run_in_executor(
+                None, f, *args, *kwargs
+            )
+
+        return wrapped
+
+    @fire_and_forget
+    def _guest_actions(self, user_id):
+        time.sleep(10)
+        SphereAPIRequest(
+            endpoint="create_guest",
+            request_method="POST",
+            data=dict(user_id=user_id),
+        ).make_request()
